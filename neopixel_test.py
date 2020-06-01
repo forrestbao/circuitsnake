@@ -1,25 +1,14 @@
+#import neopixel_test.py
+
 import time
 import board
 import neopixel
+import digitalio
 
 pixel_pin = board.D6
-num_pixels = 2
+num_pixels = 5*8
 
-pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.004, auto_write=False)
-
-
-def wheel(pos):
-    # Input a value 0 to 255 to get a color value.
-    # The colours are a transition r - g - b - back to r.
-    if pos < 0 or pos > 255:
-        return (0, 0, 0)
-    if pos < 85:
-        return (255 - pos * 3, pos * 3, 0)
-    if pos < 170:
-        pos -= 85
-        return (0, 255 - pos * 3, pos * 3)
-    pos -= 170
-    return (pos * 3, 0, 255 - pos * 3)
+pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.1, auto_write=False)
 
 
 def color_chase(color, wait):
@@ -39,14 +28,22 @@ def rainbow_cycle(wait):
         time.sleep(wait)
 
 
-RED = (255, 0, 0)
-YELLOW = (255, 150, 0)
-GREEN = (0, 255, 0)
-CYAN = (0, 255, 255)
-BLUE = (0, 0, 255)
-PURPLE = (180, 0, 255)
 
-while True:
+def fadethru(r,g,b, l):
+    for col in range(-l, 8):
+#        print ("new round")
+        pixels.fill((0,0,0))
+        pixels.show()
+        for i in range(l):
+            if i+col <8 and i+col >= 0 :
+                led = matrix2array(2, col+i)
+                print (led)
+                scale = 2.54**(-1*(l-i)/l)
+                pixels[led] = wheel(led*10) # (int(r*scale), int(g*scale), int(b*scale))
+        pixels.show()
+        time.sleep(0.2)
+
+def redgreenalter():
     pixels[0] = RED
     pixels[1] = GREEN
     pixels.show()
@@ -55,6 +52,16 @@ while True:
     pixels[0] = GREEN
     pixels.show()
     time.sleep(1)
+
+RED = (255, 0, 0)
+YELLOW = (255, 150, 0)
+GREEN = (0, 255, 0)
+CYAN = (0, 255, 255)
+BLUE = (0, 0, 255)
+PURPLE = (180, 0, 255)
+
+while True:
+    fadethru(0,12,0, 4)
 #    pixels.fill(RED)
 #
 #    # Increase or decrease to change the speed of the solid color change.
