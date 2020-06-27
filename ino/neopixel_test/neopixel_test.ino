@@ -19,15 +19,18 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(5*8, PIN, NEO_GRB + NEO_KHZ800);
 void setup() {
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
-  strip.setBrightness(10);
+  strip.setBrightness(100);
   Serial.begin(9600);
+  
 }
 
 void loop() {
 //  drivethru(strip.Color(  50,   0, 0), 150);
 //  fadethru(0, 0, 120, 6, 150);
 //  dotturn(3, 5, strip.Color(0,0,127));
-    snaketurn(3,4, 3, strip.Color(0,0,127));
+//    snaketurn(3,4, 3, strip.Color(0,0,127));
+//    decide_direction_joystick(); 
+    snaketurn_joystick(3,4, 3, strip.Color(0,0,127));
 
   
 //  // Some example procedures showing how to display to the pixels:
@@ -85,15 +88,85 @@ void printsnake(uint8_t snake[][2], uint8_t head_ptr, uint8_t tail_ptr){
 
 }
 
-void snaketurn(uint8_t head_x, uint8_t head_y, uint8_t len, uint32_t color){
-  // turn a snake around using 4 keys 
+int decide_direction_joystick(){
+  // Decide the diretion to move the cursor from joystick readings
+
+  int x, y ; 
+  int dir=-1; 
+  
+  x = analogRead(A0); y = analogRead(A1);
+
+  if (x<800 and x>700) {Serial.println("right "); dir= 1; }
+  else if (x<700) {Serial.println("left "); dir= 2;}
+  else if (y<800 and y  >700) {Serial.println("up "); dir= 3;}
+  else if (y<700) {Serial.println("down "); dir= 4;}
+
+  return dir;
+  }
+
+void snaketurn_joystick(uint8_t head_x, uint8_t head_y, uint8_t len, uint32_t color){
+  // turn a snake around using 4 keys from serial console: 
+  // 1, 2, 3, and 4 for moving left, right, up, and down.
   // head_x, head_y: coordinate of snake head
-  int led, dir; // length of the snake, direction of the snake moves to
+  int dir; // length of the snake, direction of the snake moves to
   uint8_t snake[][2]  = { }; 
   uint8_t head_ptr = len, tail_ptr = 0; // pointer to head and tail in the snake array. only advances. 
 
 
-  // 1. Initial the snake 
+  // 1. Initialize the snake 
+  for (int i = 0; i<len; i++){
+    snake[i][0] = head_x;
+    snake[i][1] = head_y-len+i+1; // FIXME initial snake has incorrect tail (x,y-(len-1)), (x,y-(len-1)+1),..., (x,y-(len-1)+(len-1))
+    // it erroratically became the 2nd last from tail side
+    }
+
+  while (true){
+    delay(200);
+    // Update snake head per user input
+
+      dir = decide_direction_joystick(); 
+    
+      printsnake(snake, head_ptr, tail_ptr);
+      drawsnake(snake, head_ptr, tail_ptr); 
+
+      if (dir> 0){
+        switch (dir){
+            // TODO: add direction check, does not allow snake to grow backward
+            case 2: // left
+              head_y -= 1; 
+              break;
+            case 1: // right
+              head_y += 1; 
+              break;
+            case 3: // up
+              head_x -= 1;
+              break;
+            case 4: // down
+              head_x += 1; 
+              break;
+          }
+
+      // Add new snake head into snake
+      snake[head_ptr][0] = head_x; snake[head_ptr][1] = head_y; 
+  
+      // Shift head and tail pointer in snake
+      head_ptr += 1; tail_ptr += 1; 
+     } // end if
+
+  }
+  
+}
+
+void snaketurn(uint8_t head_x, uint8_t head_y, uint8_t len, uint32_t color){
+  // turn a snake around using 4 keys from serial console: 
+  // 1, 2, 3, and 4 for moving left, right, up, and down.
+  // head_x, head_y: coordinate of snake head
+  int dir; // direction of the snake moves to
+  uint8_t snake[][2]  = { }; 
+  uint8_t head_ptr = len, tail_ptr = 0; // pointer to head and tail in the snake array. only advances. 
+
+
+  // 1. Initialize the snake 
   for (int i = 0; i<len; i++){
     snake[i][0] = head_x;
     snake[i][1] = head_y-len+i+1; // FIXME initial snake has incorrect tail (x,y-(len-1)), (x,y-(len-1)+1),..., (x,y-(len-1)+(len-1))
