@@ -3,6 +3,8 @@
 
 #define PIN 6
 
+const uint8_t Width = 7, Height = 4; // max X and max Y
+
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
 // Parameter 3 = pixel type flags, add together as needed:
@@ -28,7 +30,7 @@ void setup() {
 }
 
 void loop() {
-    snaketurn_gesture(3,4, 3, strip.Color(0,0,127));  
+    snaketurn_gesture(2,4, 4, strip.Color(0,0,127));  
 //  // Some example procedures showing how to display to the pixels:
 //  colorWipe(strip.Color(255, 0, 0), 50); // Red
 //  colorWipe(strip.Color(0, 255, 0), 50); // Green
@@ -91,40 +93,49 @@ void snaketurn_gesture(uint8_t head_x, uint8_t head_y, uint8_t len, uint32_t col
     snake[i][1] = head_y-len+i+1; // FIXME initial snake has incorrect tail (x,y-(len-1)), (x,y-(len-1)+1),..., (x,y-(len-1)+(len-1))
     // it erroratically became the 2nd last from tail side
     }
+    drawsnake(snake, head_ptr, tail_ptr); // draw the snake for the first time
+
 
   while (true){
-    delay(100);
+   delay(100);
     // Update snake head per user input
 
      if (APDS.gestureAvailable()) {
        // a gesture was detected, read and print to serial monitor
         int gesture = APDS.readGesture();
-        Serial.println(gesture);
-    
-        printsnake(snake, head_ptr, tail_ptr);
-        drawsnake(snake, head_ptr, tail_ptr); 
+//        Serial.println(gesture);
 
-        switch (gesture){
-            // TODO: add direction check, does not allow snake to grow backward
-            case 1: // left
-              head_y -= 1; 
-              break;
-            case 0: // right
-              head_y += 1; 
-              break;
-            case 2: // up
-              head_x -= 1;
-              break;
-            case 3: // down
-              head_x += 1; 
-              break;
+        // TODO: add direction check, does not allow snake to grow backward
+        if (gesture == 1){ // left
+            Serial.println("Move left");
+            if (head_y > 0)  head_y -= 1; 
+            else   continue; // keep the position of the snake
         }
-
+        else if (gesture == 0 ){ // right
+            Serial.println("Move right");
+            if (head_y < Width)  head_y += 1; 
+            else continue; 
+        }
+        else if (gesture == 2){ // up
+            Serial.println("Move up");
+            if (head_x > 0) head_x -= 1;
+            else continue;
+        }
+        else if (gesture == 3){ // down
+            Serial.println("Move down");
+            if (head_x < Height) head_x += 1; 
+            else continue; 
+        }
+      
       // Add new snake head into snake
       snake[head_ptr][0] = head_x; snake[head_ptr][1] = head_y; 
   
-      // Shift head and tail pointer in snake
+      // Shift head and tail pointer in snake  
       head_ptr += 1; tail_ptr += 1; 
+
+      printsnake(snake, head_ptr, tail_ptr);
+      drawsnake(snake, head_ptr, tail_ptr); 
+      
      } // end if
 
   }
